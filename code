@@ -4,19 +4,15 @@ import json, html, logging
 
 logging.basicConfig(level=logging.INFO)
 
-# сюда поставь ссылку, где лежит твой index.html (https://..., можно временно ngrok)
-WEBAPP_URL = "https://example.com/index.html"
+# 👇 сюда ставишь ссылку на свой статический хостинг (где лежит этот html)
+WEBAPP_URL = "https://ТВОЙ-ДОМЕН/ТВОЙ-ФАЙЛ.html"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    kb = [[
-        KeyboardButton(
-            text="🧪 Открыть анализатор",
-            web_app=WebAppInfo(url=WEBAPP_URL)
-        )
-    ]]
+    # кнопка, которая откроет твой html прямо в Telegram
+    kb = [[KeyboardButton(text="🧪 Открыть анализатор", web_app=WebAppInfo(url=WEBAPP_URL))]]
     await update.message.reply_text(
-        "Жми кнопку и отправляй результаты 👇",
-        reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True),
+        "Жми кнопку, заполни и нажми «Отправить в чат» 👇",
+        reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True)
     )
 
 async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -25,19 +21,18 @@ async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         text = (
             "🧪 <b>Результаты анализа</b>\n\n"
-            f"📊 <b>Тип анализа:</b> {html.escape(data.get('type','Не указан'))}\n"
-            f"📅 <b>Время анализа:</b> {html.escape(data.get('timestamp','Не указано'))}\n\n"
+            f"📊 <b>Тип анализа:</b> {html.escape(data.get('type', 'Не указан'))}\n"
+            f"📅 <b>Время анализа:</b> {html.escape(data.get('timestamp', 'Не указано'))}\n\n"
         )
 
         for r in data.get("results", []):
             icon = "✅" if r.get("status") == "normal" else "⚠️"
             text += (
-                f"{icon} <b>{html.escape(r.get('parameter',''))}:</b> "
-                f"{html.escape(r.get('value',''))}\n"
+                f"{icon} <b>{html.escape(r.get('parameter',''))}:</b> {html.escape(r.get('value',''))}\n"
                 f"{html.escape(r.get('explanation',''))}\n\n"
             )
 
-        # отправляем туда же, откуда пришло
+        # отправляем обратно в этот же чат (самый простой вариант)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=text,
